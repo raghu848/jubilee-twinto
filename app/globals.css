@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand tokens — the whole site draws from these, not Tailwind defaults */
+  --color-paper: #FBF9F8;
+  --color-white: #FFFFFF;
+  --color-red-primary: #A32638;
+  --color-red-deep: #6F1522;
+  --color-ink: #1C1917;
+  --color-ink-deep: #120F0E;
+  --color-stone: #6B645F;
+  --color-hairline: #E7E1DD;
+
+  /* Tonal blocks that hold the place of photography */
+  --color-shell: #ECE5E0;
+  --color-shell-deep: #E0D7D1;
+  --color-shell-dark: #241E21;
+
+  --font-display: var(--font-bodoni), "Didot", Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-script: var(--font-script), "Snell Roundhand", cursive;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-entrance: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: var(--color-red-primary);
+    color: var(--color-white);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-red-primary);
+    outline-offset: 3px;
+  }
+
+  .measure { max-width: 62ch; }
+  .measure-tight { max-width: 46ch; }
+}
+
+@layer components {
+  /*
+    The one place all-caps is allowed: small structural labels, spaced just
+    enough to read. Everything else stays sentence case.
+  */
+  .label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .script {
+    font-family: var(--font-script);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .rule { border-top: 1px solid var(--color-hairline); }
+
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 100% 1px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    transition: background-size 260ms var(--ease-out-expo);
+  }
+  .link-underline:hover { background-size: 0% 1px; }
+
+  /* Hairline that grows from the left on hover — used on list rows */
+  .row-mark::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 1px;
+    width: 0;
+    background: var(--color-red-primary);
+    transition: width 520ms var(--ease-out-expo);
+  }
+  .row-mark:hover::after { width: 100%; }
+}
+
+/* ------------------------------------------------------------- motion ---- */
+
+/*
+  Two kinds of motion only: a choreographed entrance on first paint, and
+  reveals that respond to the reader arriving at a section. Nothing loops,
+  nothing moves on its own except the marquee, which is a deliberate device.
+*/
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rise-clip {
+  from { opacity: 0; transform: translateY(105%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes settle {
+  from { transform: scale(1.12); }
+  to   { transform: scale(1); }
+}
+
+@keyframes draw-x {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(7px); }
+}
+
+.enter {
+  opacity: 0;
+  animation: rise 900ms var(--ease-out-expo) forwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Each line of the headline rises out from behind the line above it */
+.enter-line {
+  display: block;
+  opacity: 0;
+  animation: rise-clip 1100ms var(--ease-out-expo) forwards;
+  animation-delay: var(--d, 0ms);
+}
+
+.enter-settle {
+  animation: settle 1800ms var(--ease-out-expo) forwards;
+}
+
+.enter-rule {
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: draw-x 900ms var(--ease-out-expo) forwards;
+  animation-delay: var(--d, 0ms);
+}
+
+.spin-slow { animation: spin 22s linear infinite; }
+.spin { animation: spin 700ms linear infinite; }
+.drift { animation: drift 2.4s ease-in-out infinite; }
+
+/* Scroll reveals — the class is added by an IntersectionObserver */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 900ms var(--ease-out-expo),
+    transform 900ms var(--ease-out-expo);
+  transition-delay: var(--d, 0ms);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* An image slot that wipes open as it comes into view */
+.reveal-wipe {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 1100ms var(--ease-out-expo);
+  transition-delay: var(--d, 0ms);
+}
+.reveal-wipe.is-in { clip-path: inset(0 0 0 0); }
+
+/* Marquee: the label runs when the control is hovered or focused */
+.marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  will-change: transform;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-visible .marquee-track {
+  animation: marquee 9s linear infinite;
+}
+
+/* The tonal hatch that marks an image slot as deliberately empty */
+.slot-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, currentColor 8%, transparent) 0 1px,
+    transparent 1px 12px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .enter, .enter-line { opacity: 1; transform: none; }
+  .enter-rule { transform: scaleX(1); }
+  .reveal { opacity: 1; transform: none; }
+  .reveal-wipe { clip-path: none; }
+  .marquee:hover .marquee-track { animation: none; }
+}
